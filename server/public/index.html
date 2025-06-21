@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DartMate - Darts Match</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 DartMate</h1>
+            <p>Real-time darts matches</p>
+        </header>
+
+        <div id="main-menu" class="screen">
+            <div class="menu-options">
+                <button id="create-room-btn" class="btn btn-primary">Create Room</button>
+                <div class="join-room">
+                    <input type="text" id="room-id-input" placeholder="Enter Room ID">
+                    <input type="text" id="player-name-input" placeholder="Enter Your Name">
+                    <button id="join-room-btn" class="btn btn-secondary">Join Room</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="room-screen" class="screen hidden">
+            <div class="room-info">
+                <h2>Room ID: <span id="current-room-id"></span></h2>
+                <div class="players-list">
+                    <h3>Players:</h3>
+                    <div id="players-container"></div>
+                </div>
+                <button id="start-game-btn" class="btn btn-primary">Start Game</button>
+            </div>
+        </div>
+
+        <div id="game-screen" class="screen hidden">
+            <div class="game-info">
+                <div class="scores">
+                    <div id="scores-container"></div>
+                </div>
+                
+                <div class="current-turn">
+                    <h3>Current Turn: <span id="current-player-name">-</span></h3>
+                </div>
+                
+                <div class="dart-input">
+                    <h4>Enter Dart Scores:</h4>
+                    <div class="dart-inputs">
+                        <input type="number" id="dart1" min="0" max="180" placeholder="Dart 1">
+                        <input type="number" id="dart2" min="0" max="180" placeholder="Dart 2">
+                        <input type="number" id="dart3" min="0" max="180" placeholder="Dart 3">
+                    </div>
+                    <button id="submit-visit-btn" class="btn btn-primary">Submit Visit</button>
+                </div>
+                
+                <div class="game-log">
+                    <h4>Game Log:</h4>
+                    <div id="log-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-finished-screen" class="screen hidden">
+            <div class="winner-info">
+                <h2>🎉 Game Finished!</h2>
+                <h3>Winner: <span id="winner-name"></span></h3>
+                <button id="new-game-btn" class="btn btn-primary">New Game</button>
+            </div>
+        </div>
+
+        <div id="error-message" class="error hidden"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

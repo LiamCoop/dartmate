@@ -1,0 +1,265 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 800px;
+    min-height: 600px;
+    padding: 30px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    font-size: 2.5em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+header p {
+    color: #666;
+    font-size: 1.1em;
+}
+
+.screen {
+    display: block;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+.menu-options {
+    text-align: center;
+}
+
+.join-room {
+    margin-top: 30px;
+}
+
+.join-room input {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    margin: 10px auto;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+.join-room input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 10px;
+}
+
+.btn:hover {
+    background: #5a6fd8;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.room-info {
+    text-align: center;
+}
+
+.room-info h2 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.players-list {
+    margin: 30px 0;
+}
+
+.players-list h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.player-item {
+    background: #f8f9fa;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.scores {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.score-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    min-width: 150px;
+    border-left: 4px solid #667eea;
+}
+
+.score-card.current-turn {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+.score-card h4 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.score-card .score {
+    font-size: 2em;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.current-turn {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.dart-input {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.dart-input h4 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.dart-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.dart-inputs input {
+    width: 80px;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.dart-inputs input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.game-log {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.game-log h4 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.log-entry {
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+    color: #666;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.winner-info {
+    text-align: center;
+}
+
+.winner-info h2 {
+    color: #28a745;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+}
+
+.winner-info h3 {
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 1.5em;
+}
+
+.error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 20px;
+    text-align: center;
+    border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 20px;
+    }
+    
+    .scores {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .dart-inputs {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .dart-inputs input {
+        width: 120px;
+    }
+}
