@@ -150,8 +150,9 @@ class DartMate {
         const dart2 = parseInt(document.getElementById('dart2').value) || 0;
         const dart3 = parseInt(document.getElementById('dart3').value) || 0;
         
-        if (dart1 < 0 || dart1 > 180 || dart2 < 0 || dart2 > 180 || dart3 < 0 || dart3 > 180) {
-            this.showError('Each dart score must be between 0 and 180');
+        const validation = validateVisit(dart1, dart2, dart3);
+        if (!validation.isValid) {
+            this.showError(validation.errors.join('. '));
             return;
         }
         

@@ -1,4 +1,5 @@
 const { db } = require('./database');
+const { validateVisit, validateTotalScore } = require('./dartboard-validator');
 
 function handleSocketConnection(io, socket) {
   console.log('A user connected:', socket.id);
@@ -45,7 +46,7 @@ function handleSocketConnection(io, socket) {
   });
 
   socket.on('submit-visit', (data) => {
-    const { dart1, dart2, dart3 } = data;
+    const { dart1, dart2, dart3, isTotal } = data;
     const playerId = socket.playerId;
     const roomId = socket.roomId;
     
@@ -54,12 +55,37 @@ function handleSocketConnection(io, socket) {
       return;
     }
     
-    if (dart1 === undefined || dart2 === undefined || dart3 === undefined) {
-      socket.emit('error', { message: 'All three dart scores are required' });
-      return;
+    let finalDart1 = dart1;
+    let finalDart2 = dart2;
+    let finalDart3 = dart3;
+    let total;
+
+    if (isTotal) {
+      // In total mode, dart1 contains the total score
+      total = dart1;
+      const totalValidation = validateTotalScore(total);
+      if (!totalValidation.isValid) {
+        socket.emit('error', { message: totalValidation.errors.join('. ') });
+        return;
+      }
+      // For display purposes, we'll show the total as one dart
+      finalDart1 = total;
+      finalDart2 = 0;
+      finalDart3 = 0;
+    } else {
+      if (dart1 === undefined || dart2 === undefined || dart3 === undefined) {
+        socket.emit('error', { message: 'All three dart scores are required' });
+        return;
+      }
+      
+      const validation = validateVisit(dart1, dart2, dart3);
+      if (!validation.isValid) {
+        socket.emit('error', { message: validation.errors.join('. ') });
+        return;
+      }
+      
+      total = dart1 + dart2 + dart3;
     }
-    
-    const total = dart1 + dart2 + dart3;
     
     db.get('SELECT * FROM players WHERE id = ?', [playerId], (err, player) => {
       if (err) {
@@ -75,13 +101,18 @@ function handleSocketConnection(io, socket) {
         return;
       }
       
-      if (newScore === 0 && dart3 % 2 !== 0) {
+      if (newScore === 0 && !isTotal && dart3 % 2 !== 0) {
         socket.emit('error', { message: 'Must finish with a double' });
         return;
       }
       
+      if (newScore === 0 && isTotal) {
+        // For total mode, we can't validate the double finish rule
+        // since we don't know the individual dart scores
+      }
+      
       db.run('INSERT INTO visits (player_id, room_id, dart1, dart2, dart3, total, remaining_score) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [playerId, roomId, dart1, dart2, dart3, total, newScore], function(err) {
+        [playerId, roomId, finalDart1, finalDart2, finalDart3, total, newScore], function(err) {
         if (err) {
           console.error('Error recording visit:', err);
           socket.emit('error', { message: 'Failed to record visit' });
@@ -116,7 +147,7 @@ function handleSocketConnection(io, socket) {
           io.to(roomId).emit('visit-recorded', {
             playerId,
             playerName: player.name,
-            dart1, dart2, dart3,
+            dart1: finalDart1, dart2: finalDart2, dart3: finalDart3,
             total,
             newScore
           });
