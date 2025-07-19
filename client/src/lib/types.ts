@@ -4,6 +4,12 @@ export interface Player {
   id: string;
   name: string;
   current_score: number;
+  player_order: number;
+}
+
+export interface MatchSettings {
+  format: 'first-of' | 'best-of';
+  length: number;
 }
 
 export interface Room {
@@ -11,6 +17,10 @@ export interface Room {
   gameState: string;
   currentPlayerId: string;
   winnerId?: string;
+  creatorId: string;
+  matchSettings?: MatchSettings;
+  currentLeg: number;
+  legWins: Record<string, number>;
 }
 
 export interface Visit {

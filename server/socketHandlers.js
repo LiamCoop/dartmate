@@ -126,20 +126,8 @@ function handleSocketConnection(io, socket) {
           }
           
           if (newScore === 0) {
-            db.run('UPDATE rooms SET game_state = ?, winner_id = ? WHERE id = ?', 
-              ['finished', playerId, roomId], (err) => {
-              if (err) {
-                console.error('Error updating room state:', err);
-                return;
-              }
-              
-              io.to(roomId).emit('game-finished', { 
-                winnerId: playerId,
-                winnerName: player.name
-              });
-              
-              broadcastRoomState(io, roomId);
-            });
+            // Player finished this leg - handle leg completion
+            handleLegCompletion(io, roomId, playerId, player.name);
           } else {
             switchTurn(io, roomId, playerId);
           }
@@ -154,6 +142,14 @@ function handleSocketConnection(io, socket) {
         });
       });
     });
+  });
+
+  socket.on('player-reordered', (data) => {
+    const { roomId } = data;
+    
+    if (roomId) {
+      socket.to(roomId).emit('player-reordered');
+    }
   });
 
   socket.on('disconnect', () => {
@@ -174,7 +170,7 @@ function handleSocketConnection(io, socket) {
 }
 
 function switchTurn(io, roomId, currentPlayerId) {
-  db.all('SELECT * FROM players WHERE room_id = ? ORDER BY created_at', [roomId], (err, players) => {
+  db.all('SELECT * FROM players WHERE room_id = ? ORDER BY player_order', [roomId], (err, players) => {
     if (err) {
       console.error('Error finding players:', err);
       return;
@@ -211,7 +207,7 @@ function broadcastRoomState(io, roomId) {
       return;
     }
     
-    db.all('SELECT id, name, current_score FROM players WHERE room_id = ?', [roomId], (err, players) => {
+    db.all('SELECT id, name, current_score, player_order FROM players WHERE room_id = ? ORDER BY player_order', [roomId], (err, players) => {
       if (err) {
         console.error('Error finding players:', err);
         return;
@@ -222,11 +218,98 @@ function broadcastRoomState(io, roomId) {
           id: room.id,
           gameState: room.game_state,
           currentPlayerId: room.current_player_id,
-          winnerId: room.winner_id
+          winnerId: room.winner_id,
+          creatorId: room.creator_id,
+          matchSettings: room.match_format && room.match_length ? {
+            format: room.match_format,
+            length: room.match_length
+          } : undefined,
+          currentLeg: room.current_leg || 1,
+          legWins: room.leg_wins ? JSON.parse(room.leg_wins) : {}
         },
         players
       });
     });
+  });
+}
+
+function handleLegCompletion(io, roomId, winnerId, winnerName) {
+  db.get('SELECT * FROM rooms WHERE id = ?', [roomId], (err, room) => {
+    if (err) {
+      console.error('Error finding room:', err);
+      return;
+    }
+
+    const currentLegWins = room.leg_wins ? JSON.parse(room.leg_wins) : {};
+    const matchFormat = room.match_format || 'first-of';
+    const matchLength = room.match_length || 1;
+    
+    // Increment the winner's leg count
+    currentLegWins[winnerId] = (currentLegWins[winnerId] || 0) + 1;
+    
+    // Calculate required legs to win
+    const requiredLegsToWin = matchFormat === 'first-of' 
+      ? matchLength 
+      : Math.ceil(matchLength / 2);
+    
+    // Check if match is complete
+    const isMatchComplete = currentLegWins[winnerId] >= requiredLegsToWin;
+    
+    if (isMatchComplete) {
+      // Match is complete
+      db.run('UPDATE rooms SET game_state = ?, winner_id = ?, leg_wins = ? WHERE id = ?', 
+        ['finished', winnerId, JSON.stringify(currentLegWins), roomId], (err) => {
+        if (err) {
+          console.error('Error updating room state:', err);
+          return;
+        }
+        
+        io.to(roomId).emit('game-finished', { 
+          winnerId: winnerId,
+          winnerName: winnerName,
+          finalScore: currentLegWins
+        });
+        
+        broadcastRoomState(io, roomId);
+      });
+    } else {
+      // Start new leg
+      const newLegNumber = (room.current_leg || 1) + 1;
+      
+      // Reset all player scores to 501 for new leg
+      db.run('UPDATE players SET current_score = 501 WHERE room_id = ?', [roomId], (err) => {
+        if (err) {
+          console.error('Error resetting player scores:', err);
+          return;
+        }
+        
+        // Get first player to start new leg
+        db.get('SELECT id FROM players WHERE room_id = ? ORDER BY player_order LIMIT 1', [roomId], (err, firstPlayer) => {
+          if (err) {
+            console.error('Error finding first player:', err);
+            return;
+          }
+          
+          // Update room for new leg
+          db.run('UPDATE rooms SET current_leg = ?, leg_wins = ?, current_player_id = ? WHERE id = ?', 
+            [newLegNumber, JSON.stringify(currentLegWins), firstPlayer.id, roomId], (err) => {
+            if (err) {
+              console.error('Error updating room for new leg:', err);
+              return;
+            }
+            
+            io.to(roomId).emit('leg-finished', { 
+              winnerId: winnerId,
+              winnerName: winnerName,
+              legNumber: room.current_leg || 1,
+              currentScore: currentLegWins
+            });
+            
+            broadcastRoomState(io, roomId);
+          });
+        });
+      });
+    }
   });
 }
 

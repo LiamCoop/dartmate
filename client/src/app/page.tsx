@@ -38,10 +38,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl min-h-[600px] p-8">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">🎯 DartMate</h1>
-          <p className="text-gray-600 text-lg">Real-time darts matches</p>
-        </header>
 
         {gameState === 'menu' && (
           <MainMenu onJoinRoom={handleJoinRoom} />

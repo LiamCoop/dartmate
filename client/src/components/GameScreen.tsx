@@ -50,6 +50,11 @@ export default function GameScreen({ roomId, playerId, playerName, onGameFinishe
       onGameFinished();
     });
 
+    socket.on('leg-finished', (data: { winnerId: string, winnerName: string, legNumber: number, currentScore: Record<string, number> }) => {
+      // Room state will be updated automatically via room-state event
+      console.log(`Leg ${data.legNumber} won by ${data.winnerName}`);
+    });
+
     socket.on('error', (data: { message: string }) => {
       setError(data.message);
     });
@@ -59,6 +64,7 @@ export default function GameScreen({ roomId, playerId, playerName, onGameFinishe
       socket.off('visit-recorded');
       socket.off('turn-changed');
       socket.off('game-finished');
+      socket.off('leg-finished');
       socket.off('error');
     };
   }, [roomId, playerId, onGameFinished]);
@@ -140,9 +146,43 @@ export default function GameScreen({ roomId, playerId, playerName, onGameFinishe
         ))}
       </div>
 
+      {/* Match Scoreboard */}
+      {roomData?.room.matchSettings && (
+        <div className="bg-gray-50 p-4 rounded-xl border">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {roomData.room.matchSettings.format === 'first-of' ? 'First to' : 'Best of'} {roomData.room.matchSettings.length} {roomData.room.matchSettings.length === 1 ? 'leg' : 'legs'}
+            </h3>
+            <span className="text-sm text-gray-600">
+              Leg {roomData.room.currentLeg}
+            </span>
+          </div>
+          <div className="flex justify-center gap-6">
+            {roomData.players.map((player) => {
+              const legWins = roomData.room.legWins?.[player.id] || 0;
+              const requiredToWin = roomData.room.matchSettings!.format === 'first-of' 
+                ? roomData.room.matchSettings!.length 
+                : Math.ceil(roomData.room.matchSettings!.length / 2);
+              
+              return (
+                <div key={player.id} className="text-center">
+                  <div className="font-medium text-gray-700 mb-1">{player.name}</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {legWins}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {legWins >= requiredToWin ? '🏆' : `/ ${requiredToWin}`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Current Turn */}
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-700">
+        <h3 className="text-xl font-semibold text-gray-900">
           Current Turn: {roomData?.players.find(p => p.id === roomData.room.currentPlayerId)?.name || '-'}
         </h3>
       </div>
@@ -150,7 +190,7 @@ export default function GameScreen({ roomId, playerId, playerName, onGameFinishe
       {/* Dart Input */}
       <div className="bg-gray-100 p-6 rounded-xl">
         <div className="text-center mb-4">
-          <h4 className="text-lg font-semibold text-gray-700 mb-3">Enter Dart Scores:</h4>
+          <h4 className="text-lg font-semibold text-gray-900 mb-3">Enter Dart Scores:</h4>
           <button
             onClick={toggleInputMode}
             disabled={!isMyTurn}
