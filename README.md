@@ -1,5 +1,8 @@
 # DartMate - Real-time Darts Match Application
 
+<img width="685" height="831" alt="image" src="https://github.com/user-attachments/assets/06c6aecd-ba87-44f8-b7dc-1bfa095f6ad8" />
+
+
 A real-time multiplayer darts application with room-based gameplay, built with Node.js backend and Next.js frontend.
 
 ## Project Structure
