@@ -150,11 +150,12 @@ export default function RoomScreen({ roomId, playerId, playerName, onStartGame }
 
   const isRoomCreator = roomData?.room.creatorId === playerId;
 
-  const copyRoomId = async () => {
+  const copyRoomLink = async () => {
     try {
-      await navigator.clipboard.writeText(roomId);
+      const roomLink = `${window.location.origin}?roomId=${roomId}`;
+      await navigator.clipboard.writeText(roomLink);
     } catch (err) {
-      console.error('Failed to copy room ID:', err);
+      console.error('Failed to copy room link:', err);
     }
   };
 
@@ -164,10 +165,10 @@ export default function RoomScreen({ roomId, playerId, playerName, onStartGame }
         <div className="flex items-center space-x-4">
           <h2 className="text-2xl font-bold text-gray-800">Waiting Room</h2>
           <button
-            onClick={copyRoomId}
+            onClick={copyRoomLink}
             className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium transition-colors"
           >
-            Copy Room ID
+            Copy Room Link
           </button>
         </div>
         

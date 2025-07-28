@@ -1,18 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface MainMenuProps {
   onJoinRoom: (roomId: string, playerId: string, playerName: string) => void;
+  initialRoomId?: string;
 }
 
-export default function MainMenu({ onJoinRoom }: MainMenuProps) {
-  const [roomId, setRoomId] = useState('');
+export default function MainMenu({ onJoinRoom, initialRoomId }: MainMenuProps) {
   const [playerName, setPlayerName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const hasRoomId = Boolean(initialRoomId);
 
   const createRoom = async () => {
+    if (!playerName.trim()) {
+      setError('Please enter your name');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/rooms`, {
@@ -25,8 +31,22 @@ export default function MainMenu({ onJoinRoom }: MainMenuProps) {
       const data = await response.json();
       
       if (response.ok) {
-        setRoomId(data.roomId);
-        setError('Room created! Share the Room ID with other players.');
+        // Automatically join the created room
+        const joinResponse = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/rooms/${data.roomId}/join`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ playerName })
+        });
+        
+        const joinData = await joinResponse.json();
+        
+        if (joinResponse.ok) {
+          onJoinRoom(joinData.roomId, joinData.playerId, joinData.playerName);
+        } else {
+          setError(joinData.error);
+        }
       } else {
         setError(data.error);
       }
@@ -38,14 +58,19 @@ export default function MainMenu({ onJoinRoom }: MainMenuProps) {
   };
 
   const joinRoom = async () => {
-    if (!roomId.trim() || !playerName.trim()) {
-      setError('Please enter both Room ID and Player Name');
+    if (!playerName.trim()) {
+      setError('Please enter your name');
+      return;
+    }
+
+    if (!initialRoomId) {
+      setError('No room ID provided');
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/rooms/${roomId}/join`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/rooms/${initialRoomId}/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -69,23 +94,7 @@ export default function MainMenu({ onJoinRoom }: MainMenuProps) {
 
   return (
     <div className="text-center space-y-8">
-      <button
-        onClick={createRoom}
-        disabled={isLoading}
-        className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-200 disabled:opacity-50"
-      >
-        {isLoading ? 'Creating...' : 'Create Room'}
-      </button>
-      
       <div className="space-y-4">
-        <input
-          type="text"
-          value={roomId}
-          onChange={(e) => setRoomId(e.target.value)}
-          placeholder="Enter Room ID"
-          className="w-full max-w-md mx-auto block px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        />
-        
         <input
           type="text"
           value={playerName}
@@ -94,17 +103,27 @@ export default function MainMenu({ onJoinRoom }: MainMenuProps) {
           className="w-full max-w-md mx-auto block px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
         />
         
-        <button
-          onClick={joinRoom}
-          disabled={isLoading}
-          className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 disabled:opacity-50"
-        >
-          {isLoading ? 'Joining...' : 'Join Room'}
-        </button>
+        {hasRoomId ? (
+          <button
+            onClick={joinRoom}
+            disabled={isLoading}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-200 disabled:opacity-50"
+          >
+            {isLoading ? 'Joining...' : 'Join Room'}
+          </button>
+        ) : (
+          <button
+            onClick={createRoom}
+            disabled={isLoading}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-200 disabled:opacity-50"
+          >
+            {isLoading ? 'Creating...' : 'Create Room'}
+          </button>
+        )}
       </div>
 
       {error && (
-        <div className={`p-4 rounded-xl ${error.includes('created') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+        <div className="bg-red-100 text-red-800 p-4 rounded-xl">
           {error}
         </div>
       )}
