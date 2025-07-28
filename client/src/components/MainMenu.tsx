@@ -94,6 +94,11 @@ export default function MainMenu({ onJoinRoom, initialRoomId }: MainMenuProps) {
 
   return (
     <div className="text-center space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold text-gray-800">Dartmate</h1>
+        <p className="text-lg text-gray-600">Play '01' games with your friends!</p>
+      </div>
+      
       <div className="space-y-4">
         <input
           type="text"
