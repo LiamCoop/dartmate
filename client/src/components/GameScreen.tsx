@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { validateVisit, validateTotalScore } from '@/lib/dartboard-validator';
 import { Player, RoomData, Visit } from '@/lib/types';
 import { getSocket } from '@/lib/socket';
@@ -20,6 +20,22 @@ export default function GameScreen({ roomId, playerId, playerName, onGameFinishe
   const [totalScore, setTotalScore] = useState<number>(0);
   const [inputMode, setInputMode] = useState<'individual' | 'total'>('individual');
   const [error, setError] = useState('');
+
+  const loadRoomData = useCallback(async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/rooms/${roomId}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setRoomData(data);
+        if (data.room.gameState === 'finished') {
+          onGameFinished();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load room data:', error);
+    }
+  }, [roomId, onGameFinished]);
 
   useEffect(() => {
     loadRoomData();
@@ -67,23 +83,7 @@ export default function GameScreen({ roomId, playerId, playerName, onGameFinishe
       socket.off('leg-finished');
       socket.off('error');
     };
-  }, [roomId, playerId, onGameFinished]);
-
-  const loadRoomData = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/rooms/${roomId}`);
-      const data = await response.json();
-      
-      if (response.ok) {
-        setRoomData(data);
-        if (data.room.gameState === 'finished') {
-          onGameFinished();
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load room data:', error);
-    }
-  };
+  }, [roomId, playerId, onGameFinished, loadRoomData]);
 
   const submitVisit = () => {
     let finalDart1 = dart1;

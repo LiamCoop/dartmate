@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RoomData } from '@/lib/types';
 import { getSocket } from '@/lib/socket';
 
@@ -18,6 +18,22 @@ export default function RoomScreen({ roomId, playerId, playerName, onStartGame }
   const [isReordering, setIsReordering] = useState(false);
   const [matchFormat, setMatchFormat] = useState<'first-of' | 'best-of'>('first-of');
   const [matchLength, setMatchLength] = useState<number>(1);
+
+  const loadRoomData = useCallback(async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/rooms/${roomId}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setRoomData(data);
+        setError('');
+      } else {
+        setError(data.error);
+      }
+    } catch (error) {
+      setError('Failed to load room data');
+    }
+  }, [roomId]);
 
   useEffect(() => {
     loadRoomData();
@@ -51,23 +67,7 @@ export default function RoomScreen({ roomId, playerId, playerName, onStartGame }
       socket.off('room-state');
       socket.off('player-reordered');
     };
-  }, [roomId, playerId, onStartGame]);
-
-  const loadRoomData = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/rooms/${roomId}`);
-      const data = await response.json();
-      
-      if (response.ok) {
-        setRoomData(data);
-        setError('');
-      } else {
-        setError(data.error);
-      }
-    } catch (error) {
-      setError('Failed to load room data');
-    }
-  };
+  }, [roomId, playerId, onStartGame, loadRoomData]);
 
   const startGame = async () => {
     setIsLoading(true);
